@@ -23,37 +23,32 @@ const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ──────────────────────────────────────────────
 
+// Trust reverse proxy (Render, Cloudflare, Vercel)
+app.set('trust proxy', 1);
+
+// CORS - Handle preflight and all cross-origin requests
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, Range');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  next();
+});
+
 // Security headers
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
-}));
-
-// CORS
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'https://allinone-pdfeditor-client.vercel.app',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-].filter(Boolean) as string[];
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
-    if (
-      allowedOrigins.includes(origin) ||
-      allowedOrigins.includes('*') ||
-      origin.endsWith('.vercel.app') ||
-      origin.endsWith('.onrender.com') ||
-      origin.endsWith('.netlify.app')
-    ) {
-      return callback(null, true);
-    }
-    return callback(null, true);
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  crossOriginEmbedderPolicy: false,
 }));
 
 // Rate limiting
@@ -90,6 +85,16 @@ app.use('/api/projects', projectRoutes);
 // Health check
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'PDF Editor API is running', timestamp: new Date().toISOString() });
+});
+
+// Root route for ping/monitoring
+app.get('/', (_req, res) => {
+  res.json({
+    success: true,
+    message: 'PDF Studio API is running',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // ─── Error Handler ──────────────────────────────────────────
@@ -132,8 +137,9 @@ const startServer = async () => {
       console.warn('⚠️  Auth & projects disabled. Tools still work.');
     }
 
-    app.listen(PORT, () => {
-      console.log(`🚀 PDF Editor API running on http://localhost:${PORT}`);
+    const serverPort = Number(PORT) || 5000;
+    app.listen(serverPort, '0.0.0.0', () => {
+      console.log(`🚀 PDF Editor API running on http://0.0.0.0:${serverPort}`);
       console.log(`📁 Uploads directory: ${uploadDir}`);
     });
   } catch (error) {
