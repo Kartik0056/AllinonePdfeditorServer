@@ -71,8 +71,13 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
 
-// Serve uploaded files statically (for development)
-app.use('/uploads', express.static(uploadDir));
+// Serve uploaded files statically with cross-origin access headers
+app.use('/uploads', express.static(uploadDir, {
+  setHeaders: (res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+  },
+}));
 
 // ─── Routes ─────────────────────────────────────────────────
 
