@@ -5,7 +5,9 @@
 import mongoose from 'mongoose';
 
 export const connectDB = async (): Promise<void> => {
-  const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/pdfeditor';
+  let uri = (process.env.MONGODB_URI || 'mongodb://localhost:27017/pdfeditor').trim();
+  // Strip accidental quotes
+  uri = uri.replace(/^["']|["']$/g, '');
 
   await mongoose.connect(uri, {
     serverSelectionTimeoutMS: 5000,
