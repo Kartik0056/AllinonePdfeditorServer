@@ -41,7 +41,16 @@ router.post('/register', async (req: Request, res: Response) => {
       success: true,
       data: {
         token,
-        user: { id: user._id, name: user.name, email: user.email },
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          phone: user.phone,
+          bio: user.bio,
+          company: user.company,
+          paymentDetails: user.paymentDetails,
+        },
       },
     });
   } catch (error: any) {
@@ -78,7 +87,16 @@ router.post('/login', async (req: Request, res: Response) => {
       success: true,
       data: {
         token,
-        user: { id: user._id, name: user.name, email: user.email },
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          phone: user.phone,
+          bio: user.bio,
+          company: user.company,
+          paymentDetails: user.paymentDetails,
+        },
       },
     });
   } catch (error: any) {
@@ -95,10 +113,93 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res: Response) => {
     }
     res.json({
       success: true,
-      data: { id: user._id, name: user.name, email: user.email },
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        phone: user.phone,
+        bio: user.bio,
+        company: user.company,
+        paymentDetails: user.paymentDetails,
+        createdAt: user.createdAt,
+      },
     });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// PUT /api/auth/profile
+router.put('/profile', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { name, avatar, phone, bio, company, paymentDetails } = req.body;
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    if (name) user.name = name.trim();
+    if (avatar !== undefined) user.avatar = avatar;
+    if (phone !== undefined) user.phone = phone.trim();
+    if (bio !== undefined) user.bio = bio.trim();
+    if (company !== undefined) user.company = company.trim();
+    if (paymentDetails) {
+      user.paymentDetails = {
+        ...user.paymentDetails,
+        ...paymentDetails,
+      };
+    }
+
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        phone: user.phone,
+        bio: user.bio,
+        company: user.company,
+        paymentDetails: user.paymentDetails,
+      },
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Failed to update profile' });
+  }
+});
+
+// PUT /api/auth/password
+router.put('/password', authMiddleware, async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, error: 'Current password and new password are required' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, error: 'New password must be at least 6 characters' });
+    }
+
+    const user = await User.findById(req.userId).select('+password');
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
+    }
+
+    const isMatch = await user.comparePassword(currentPassword);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, error: 'Incorrect current password' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message || 'Failed to change password' });
   }
 });
 

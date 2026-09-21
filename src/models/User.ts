@@ -9,6 +9,20 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
+  avatar?: string;
+  phone?: string;
+  bio?: string;
+  company?: string;
+  paymentDetails?: {
+    upiId?: string;
+    bankName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    accountHolder?: string;
+    cardLast4?: string;
+    cardHolder?: string;
+    cardExpiry?: string;
+  };
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -33,6 +47,32 @@ const UserSchema = new Schema<IUser>({
     required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters'],
     select: false, // Don't include password in queries by default
+  },
+  avatar: {
+    type: String,
+    default: '',
+  },
+  phone: {
+    type: String,
+    default: '',
+  },
+  bio: {
+    type: String,
+    default: '',
+  },
+  company: {
+    type: String,
+    default: '',
+  },
+  paymentDetails: {
+    upiId: { type: String, default: '' },
+    bankName: { type: String, default: '' },
+    accountNumber: { type: String, default: '' },
+    ifscCode: { type: String, default: '' },
+    accountHolder: { type: String, default: '' },
+    cardLast4: { type: String, default: '' },
+    cardHolder: { type: String, default: '' },
+    cardExpiry: { type: String, default: '' },
   },
   createdAt: {
     type: Date,
