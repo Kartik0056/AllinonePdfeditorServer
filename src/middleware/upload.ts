@@ -76,7 +76,8 @@ const imageFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilter
   }
 };
 
-const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '104857600', 10); // 100MB
+const MAX_FILE_SIZE = parseInt(process.env.MAX_FILE_SIZE || '104857600', 10); // 100MB general
+export const MAX_PDF_SIZE = 20 * 1024 * 1024; // Strict 20MB limit for PDF uploads & editing
 
 // Upload configurations
 export const uploadAny = multer({
@@ -88,7 +89,7 @@ export const uploadAny = multer({
 export const uploadPDF = multer({
   storage,
   fileFilter: pdfFilter,
-  limits: { fileSize: MAX_FILE_SIZE },
+  limits: { fileSize: MAX_PDF_SIZE },
 });
 
 export const uploadImages = multer({
@@ -100,7 +101,7 @@ export const uploadImages = multer({
 export const uploadMultiplePDFs = multer({
   storage,
   fileFilter: pdfFilter,
-  limits: { fileSize: MAX_FILE_SIZE, files: 20 },
+  limits: { fileSize: MAX_PDF_SIZE, files: 20 },
 });
 
 export { uploadDir };

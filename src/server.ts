@@ -15,6 +15,7 @@ import fileRoutes from './routes/fileRoutes';
 import pdfRoutes from './routes/pdfRoutes';
 import convertRoutes from './routes/convertRoutes';
 import projectRoutes from './routes/projectRoutes';
+import { startCleanupService } from './services/cleanupService';
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
@@ -61,9 +62,9 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Body parsing
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body parsing (support up to 50MB for 20MB binary base64 documents)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Create uploads directory
 const uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../uploads');
@@ -110,7 +111,7 @@ app.use((err: any, _req: express.Request, res: express.Response, _next: express.
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(413).json({
       success: false,
-      error: 'File too large. Maximum size is 100MB.',
+      error: 'File exceeds 20MB limit. The maximum allowed PDF size is 20MB.',
     });
   }
 
@@ -137,6 +138,8 @@ const startServer = async () => {
     try {
       await connectDB();
       console.log('✅ MongoDB Atlas connected successfully');
+      // Start 10-minute auto-expiry and file cleanup service
+      startCleanupService();
     } catch (dbError: any) {
       console.warn(`⚠️  MongoDB connection failed: ${dbError?.message || dbError}`);
       console.warn('⚠️  Auth & projects disabled. Tools still work.');

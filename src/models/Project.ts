@@ -17,6 +17,7 @@ export interface IProject extends Document {
     author?: string;
     subject?: string;
   };
+  expiresAt: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -58,6 +59,11 @@ const ProjectSchema = new Schema<IProject>(
       title: String,
       author: String,
       subject: String,
+    },
+    expiresAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 10 * 60 * 1000), // Auto-expire after 10 minutes
+      index: { expires: 0 },
     },
   },
   {

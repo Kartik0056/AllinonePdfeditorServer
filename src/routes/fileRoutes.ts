@@ -44,8 +44,15 @@ router.post('/upload', optionalAuth, uploadAny.single('file'), async (req: AuthR
     fs.readSync(fd, buffer, 0, 8, 0);
     fs.closeSync(fd);
 
-    // Validate PDF magic bytes
-    if (req.file.mimetype === 'application/pdf') {
+    // Validate PDF magic bytes and size limit (20MB)
+    if (req.file.mimetype === 'application/pdf' || req.file.originalname.toLowerCase().endsWith('.pdf')) {
+      if (req.file.size > 20 * 1024 * 1024) {
+        fs.unlinkSync(filePath);
+        return res.status(413).json({
+          success: false,
+          error: 'PDF file exceeds 20MB restriction. Maximum allowed PDF size is 20MB.',
+        });
+      }
       const pdfMagic = buffer.toString('ascii', 0, 5);
       if (pdfMagic !== '%PDF-') {
         fs.unlinkSync(filePath);
