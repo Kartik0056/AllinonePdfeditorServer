@@ -22,6 +22,9 @@ export interface IUser extends Document {
     cardLast4?: string;
     cardHolder?: string;
     cardExpiry?: string;
+    branchName?: string;
+    cardType?: string;
+    cardNetwork?: string;
   };
   createdAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -73,6 +76,9 @@ const UserSchema = new Schema<IUser>({
     cardLast4: { type: String, default: '' },
     cardHolder: { type: String, default: '' },
     cardExpiry: { type: String, default: '' },
+    branchName: { type: String, default: '' },
+    cardType: { type: String, default: 'debit' },
+    cardNetwork: { type: String, default: '' },
   },
   createdAt: {
     type: Date,
